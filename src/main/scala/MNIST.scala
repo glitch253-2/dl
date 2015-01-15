@@ -1,4 +1,4 @@
-import breeze.linalg.DenseVector
+import breeze.linalg.{DenseMatrix, DenseVector}
 import org.deeplearning4j.datasets.mnist._
 import java.io._
 /**
@@ -23,18 +23,29 @@ object MNIST {
     labelledData
   }
 
-
-
   def main(args: Array[String]) = {
     val trainingData = getDataSet(mnistTraining)
     val testingData = getDataSet(mnistTesting)
+    val m = 60000
+    val n = (28 * 28)
+    val features = DenseMatrix.zeros[Double](m,n)
+    println(features.rows)
+    println(features.cols)
+    val classes = DenseVector.zeros[Double](60000)
+    (0 until m).foreach(idx => {
+      val row = new DenseVector[Double](trainingData(idx)._1)
+      features(idx, ::) := row.t
+      classes(idx) = trainingData(idx)._2
+    })
     val models = (0 until 9).map(idx => {
       val model = new Logistic(0.01, 15)
-      model.train(trainingData.map(observation => {
-        if (observation._2 == idx)
-          (new DenseVector(observation._1), 1.0)
-        else (new DenseVector(observation._1), 0.0)
-      }))
+      val labels = DenseVector.zeros[Double](60000)
+      (0 until m).foreach(label => {
+        if (labels(label) == idx)
+          labels(label) = 1.0
+        else labels(label) = 0.0
+      })
+      model.train(features, labels)
       model
     })
 
