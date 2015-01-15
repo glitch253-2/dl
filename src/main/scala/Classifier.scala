@@ -5,8 +5,7 @@ import breeze.linalg.DenseVector
  */
 trait Classifier {
 
-  def train(Seq[(DenseVector[Double], Double)])
-
-  def predict(DenseVector[Double], Option[Double])
+  def train(observations: Seq[(DenseVector[Double], Double)])
+  def predict(instance: DenseVector[Double], trueResponse: Option[Double]): (Double, Double)
 
 }

@@ -1,7 +1,8 @@
 import breeze.linalg.DenseVector
 
-case class Logistic(var learningRate: Double = 0.95, iterations: Int = 100) extends Classifier {
-
+case class Logistic(lr: Double = 0.95, iterations: Int = 100) extends Classifier {
+  var weights = new DenseVector[Double](Array(1.0))
+  var learningRate = lr
 
   private def sigmoid(theta: DenseVector[Double], x: DenseVector[Double]) = {
     val innerProduct = theta.t * x
@@ -27,7 +28,7 @@ case class Logistic(var learningRate: Double = 0.95, iterations: Int = 100) exte
 
   def train(observations: Seq[(DenseVector[Double], Double)]) = {
 
-    val weights: DenseVector[Double] = DenseVector.rand(observations.head._1.length)
+    weights = DenseVector.rand(observations.head._1.length)
     (0 until iterations).foreach(iteration => {
       println("Cost: " + cost(weights, observations))
       println("LR: " + learningRate)
@@ -36,9 +37,8 @@ case class Logistic(var learningRate: Double = 0.95, iterations: Int = 100) exte
      })
   }
 
-  def predict(observation: DenseVector[Double], trueLabel: Option[Double]) {
-
-
+  def predict(observation: DenseVector[Double], trueLabel: Option[Double]): (Double, Double) = {
+    (sigmoid(weights, observation), trueLabel.getOrElse(Double.MaxValue))
   }
 
 }
