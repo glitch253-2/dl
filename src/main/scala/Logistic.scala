@@ -37,6 +37,16 @@ case class Logistic(lr: Double = 0.95, iterations: Int = 100, coolDown: Double =
   }
 
   def train(features: DenseMatrix[Double], labels: DenseVector[Double]) = {
+    means = DenseVector.zeros[Double](features.cols)
+    stds = DenseVector.zeros[Double](features.cols)
+    (0 until features.cols).foreach(idx => {
+      means(idx) = sum(features(idx,::).inner) / features.rows
+      stds(idx) = Math.sqrt(sum(features(idx,::).inner + -means(idx) :* (features(idx,::).inner + -means(idx))))
+    })
+
+    (0 until features.cols).foreach(idx => {
+      features(::,idx) := (features(::,idx) - means(idx)) / stds(idx)
+    })
 
     weights = DenseVector.rand[Double](features.cols)
     (0 until iterations).foreach(iteration => {
@@ -48,7 +58,8 @@ case class Logistic(lr: Double = 0.95, iterations: Int = 100, coolDown: Double =
   }
 
   def predict(observation: DenseVector[Double], trueLabel: Option[Double]): (Double, Double) = {
-    (sigmoid(((weights).t * observation)), trueLabel.getOrElse(Double.MaxValue))
+    val normalizedObservation = (observation - means) :/ stds
+    (sigmoid(((weights).t * normalizedObservation)), trueLabel.getOrElse(Double.MaxValue))
   }
 
 }
