@@ -37,8 +37,9 @@ object MNIST {
       features(idx, ::) := row.t
       classes(idx) = trainingData(idx)._2
     })
-    val models = (0 to 9).map(idx => {
-      val model = new Logistic(10, 150)
+      
+    val models = (0 to 9).par.map(idx => {
+      val model = new Logistic(10, 100, .8)
       val labels = DenseVector.zeros[Double](60000)
       (0 until m).foreach(label => {
         if (classes(label) == idx)
