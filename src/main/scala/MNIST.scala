@@ -37,37 +37,35 @@ object MNIST {
       features(idx, ::) := row.t
       classes(idx) = trainingData(idx)._2
     })
-    val models = (0 until 9).map(idx => {
-      val model = new Logistic(0.01, 15)
+    val models = (0 to 9).map(idx => {
+      val model = new Logistic(10, 100)
       val labels = DenseVector.zeros[Double](60000)
       (0 until m).foreach(label => {
-        if (labels(label) == idx)
+        if (classes(label) == idx)
           labels(label) = 1.0
         else labels(label) = 0.0
       })
-      model.train(features, labels)
+      model.train(features.copy, labels)
       model
     })
 
     val pw = new PrintWriter(new File("output.txt"))
+    var numCorrect = 0
     val test = testingData.map(observation => {
-      val classProbabilities = (0 until 9).map(idx => {
+      val classProbabilities = (0 to 9).map(idx => {
         models(idx).predict(new DenseVector(observation._1), Some(observation._2))
       })
       classProbabilities
     }).map(prediction => {
-      s"Actual: ${prediction(0)._2} " +
-      s"0: ${prediction(0)._1} " +
-      s"1: ${prediction(1)._1} " +
-      s"2: ${prediction(2)._1} " +
-      s"3: ${prediction(3)._1} " +
-      s"4: ${prediction(4)._1} " +
-      s"5: ${prediction(5)._1} " +
-      s"6: ${prediction(6)._1} " +
-      s"7: ${prediction(7)._1} " +
-      s"8: ${prediction(8)._1} " +
-      s"9: ${prediction(9)}._1 "
+      val results = prediction.map(_._1)
+      val index = results.zipWithIndex.maxBy(_._1)._2
+      if (index.toDouble == prediction(0)._2) {
+        numCorrect = numCorrect + 1
+      }
+      s"Prediction: ${index.toDouble} Actual: ${prediction(0)._2} "
     }).foreach(pw.println(_))
+    pw.println("Number correct: " + numCorrect)
+    pw.println("Positive rate: " + numCorrect / 10000)
     pw.close()
   }
 }
