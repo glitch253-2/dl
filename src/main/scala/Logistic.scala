@@ -1,7 +1,7 @@
 import breeze.linalg._
 import breeze.numerics._
 
-case class Logistic(lr: Double = 0.95, iterations: Int = 100, coolDown: Double = .9) extends Classifier {
+case class Logistic(lr: Double = 0.95, iterations: Int = 100, coolDown: Double = .8) extends Classifier {
   var weights = new DenseVector[Double](Array(1.0))
   var learningRate = lr
   var means = new DenseVector[Double](Array(1.0))
@@ -37,30 +37,17 @@ case class Logistic(lr: Double = 0.95, iterations: Int = 100, coolDown: Double =
   }
 
   def train(features: DenseMatrix[Double], labels: DenseVector[Double]) = {
-    /*means = DenseVector.zeros[Double](features.cols)
-    stds = DenseVector.zeros[Double](features.cols)
-    (0 until features.cols).foreach(idx => {
-      means(idx) = sum(features(idx,::).inner) / features.rows
-      stds(idx) = Math.sqrt(sum(features(idx,::).inner + -means(idx) :* (features(idx,::).inner + -means(idx))))
-    })
-
-    (0 until features.cols).foreach(idx => {
-      features(::,idx) := (features(::,idx) - means(idx)) / stds(idx)
-    })*/
 
     weights = DenseVector.rand[Double](features.cols)
     (0 until iterations).foreach(iteration => {
       println("Current Cost: " + cost(weights, features, labels) + " Current Learning Rate: " + learningRate)
       weights = computeUpdates(weights, features, labels)
-      if (iteration / iterations > .9) // if we're about 90% of the way through the descent, then we start cooling off
-        // the learning rate
+      if (iteration / iterations.toDouble > coolDown) // if we're about 80% of the way through the descent, then we start cooling off
         learningRate = learningRate * ((iterations - Math.log(iteration + 1)) / iterations.toDouble)
-
      })
   }
 
   def predict(observation: DenseVector[Double], trueLabel: Option[Double]): (Double, Double) = {
-    //val normalizedObservation = (observation - means) :/ stds
     (sigmoid(((weights).t * observation)), trueLabel.getOrElse(Double.MaxValue))
   }
 

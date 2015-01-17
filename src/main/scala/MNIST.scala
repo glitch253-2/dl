@@ -38,7 +38,7 @@ object MNIST {
       classes(idx) = trainingData(idx)._2
     })
     val models = (0 to 9).map(idx => {
-      val model = new Logistic(10, 100)
+      val model = new Logistic(10, 150)
       val labels = DenseVector.zeros[Double](60000)
       (0 until m).foreach(label => {
         if (classes(label) == idx)
@@ -65,7 +65,7 @@ object MNIST {
       s"Prediction: ${index.toDouble} Actual: ${prediction(0)._2} "
     }).foreach(pw.println(_))
     pw.println("Number correct: " + numCorrect)
-    pw.println("Positive rate: " + numCorrect / 10000)
+    pw.println("Positive rate: " + numCorrect / 10000.0)
     pw.close()
   }
 }
