@@ -1,6 +1,9 @@
 import breeze.linalg.{DenseMatrix, DenseVector}
 import org.deeplearning4j.datasets.mnist._
 import java.io._
+
+import scala.collection.parallel.ForkJoinTaskSupport
+
 /**
  * Created by mike on 1/14/2015.
  */
@@ -18,7 +21,7 @@ object MNIST {
       .map(idx => {
       ImageManager.setCurrentIndex(idx.toLong)
       LabelManager.setCurrentIndex(idx.toLong)
-      (ImageManager.readImage().flatMap(_.map(_.toDouble)), LabelManager.readLabel().toDouble)
+      (ImageManager.readImage().flatMap(i =>(i.map(_.toDouble))), LabelManager.readLabel().toDouble)
     })
     labelledData
   }
@@ -28,18 +31,19 @@ object MNIST {
     val testingData = getDataSet(mnistTesting)
     val m = 60000
     val n = (28 * 28)
-    val features = DenseMatrix.zeros[Double](m,n)
+    val features = DenseMatrix.zeros[Double](m,n+1)
     println(features.rows)
     println(features.cols)
     val classes = DenseVector.zeros[Double](60000)
     (0 until m).foreach(idx => {
-      val row = new DenseVector[Double](trainingData(idx)._1)
+      val row = new DenseVector[Double](1.0 +: trainingData(idx)._1)
       features(idx, ::) := row.t
       classes(idx) = trainingData(idx)._2
     })
-      
+    val count = (0 to 9).par
+      count.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(10))
     val models = (0 to 9).par.map(idx => {
-      val model = new Logistic(10, 100, .8)
+      val model = new Logistic(1d, 100, .8)
       val labels = DenseVector.zeros[Double](60000)
       (0 until m).foreach(label => {
         if (classes(label) == idx)
@@ -54,7 +58,7 @@ object MNIST {
     var numCorrect = 0
     val test = testingData.map(observation => {
       val classProbabilities = (0 to 9).map(idx => {
-        models(idx).predict(new DenseVector(observation._1), Some(observation._2))
+        models(idx).predict(new DenseVector(1.0+:observation._1), Some(observation._2))
       })
       classProbabilities
     }).map(prediction => {
